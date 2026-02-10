@@ -3,40 +3,54 @@
 <head>
 <meta charset="UTF-8" />
 <title>Hej…</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <style>
+/* Reset i optymalizacja pod mobile */
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
 body {
   margin: 0;
-  height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   display: flex;
   justify-content: center;
   align-items: center;
-  background: black;
+  background-color: black; /* Startowe tło */
   font-family: Arial, Helvetica, sans-serif;
-  transition: background 3s ease;
+  user-select: none;
+  position: relative;
+  transition: background-color 3s ease-in-out; /* PŁYNNE PRZEJŚCIE KOLORU TŁA */
 }
 
-/* ---------- INTRO TEXT ---------- */
+/* PŁYNNY GRADIENT - ukryta warstwa na koniec */
+#romantic-bg {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: linear-gradient(135deg, #ffafbd 0%, #ffc3a0 100%);
+  opacity: 0;
+  z-index: 0;
+  pointer-events: none;
+  transition: opacity 4s ease-in-out;
+}
+
 .screen {
   color: white;
-  font-size: 26px;
+  font-size: 24px;
   text-align: center;
   max-width: 90%;
   line-height: 1.6;
   min-height: 120px;
   opacity: 0;
-  transition: opacity 2.5s ease;
+  transition: opacity 1.2s ease;
   position: relative;
   z-index: 10;
 }
 
-/* ---------- CARD ---------- */
 .card {
   display: none;
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(8px);
-  padding: 45px 35px;
+  padding: 40px 25px;
   border-radius: 32px;
   box-shadow: 0 25px 50px rgba(0,0,0,0.15);
   text-align: center;
@@ -52,18 +66,13 @@ body {
   100% { transform: scale(1); opacity: 1; }
 }
 
-h1 {
-  color: #e63946;
-  margin-bottom: 30px;
-  font-size: 24px;
-}
+h1 { color: #e63946; margin-bottom: 30px; font-size: 22px; }
 
-/* ---------- COUNTDOWN ---------- */
 #timer {
-  margin-top: 25px; /* Odstęp od tekstu */
+  margin-top: 25px;
   font-weight: bold;
   color: #d90429;
-  font-size: 22px; /* Nieco większa czcionka */
+  font-size: 20px;
   display: none;
   background: rgba(255,255,255,0.6);
   padding: 15px;
@@ -71,12 +80,7 @@ h1 {
   border: 2px solid #ffccd5;
 }
 
-/* ---------- BUTTONS ---------- */
-.buttons {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-}
+.buttons { display: flex; justify-content: center; gap: 20px; }
 
 button {
   font-size: 18px;
@@ -84,18 +88,14 @@ button {
   border: none;
   border-radius: 999px;
   cursor: pointer;
-  transition: all 0.2s ease-out;
+  transition: transform 0.2s ease-out, background 0.3s;
+  font-weight: bold;
+  touch-action: manipulation; /* Optymalizacja pod dotyk */
 }
 
 .yes { background:#ff4d6d; color:white; }
-.no  { 
-  background:#ced4da; 
-  color:#333; 
-  position:relative; 
-  transition: transform 0.1s ease-out;
-}
+.no  { background:#ced4da; color:#333; position:relative; }
 
-/* ---------- TŁO - SPADAJĄCE SERCA ---------- */
 .heart {
   position: fixed;
   top: -20px;
@@ -105,11 +105,8 @@ button {
   z-index: 1;
 }
 
-@keyframes fall {
-  to { transform: translateY(110vh) rotate(360deg); opacity: 0; }
-}
+@keyframes fall { to { transform: translateY(110vh) rotate(360deg); opacity: 0; } }
 
-/* ---------- CONFETTI (NA KONIEC) ---------- */
 .confetti-piece {
   position: fixed;
   top: -20px;
@@ -119,13 +116,12 @@ button {
   animation: fallConfetti linear forwards;
 }
 
-@keyframes fallConfetti {
-  to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
-}
+@keyframes fallConfetti { to { transform: translateY(110vh) rotate(720deg); opacity: 0; } }
 </style>
 </head>
 <body>
 
+<div id="romantic-bg"></div>
 <div class="screen" id="screen"></div>
 
 <div class="card" id="card">
@@ -134,18 +130,20 @@ button {
     <button class="yes" onclick="yesClicked()">Tak 💖</button>
     <button class="no" id="noBtn">Nie...</button>
   </div>
-  
   <div id="timer"></div>
 </div>
 
 <script>
-/* ---------- KONFIGURACJA INTRO ---------- */
 const texts = [
-  'Hej…',
-  'Muszę Cię o coś zapytać.',
-  'To jest trochę dziwne pytanie…',
-  'Ale dla mnie bardzo ważne.',
-  'Obiecaj, że odpowiesz szczerze…'
+  'Hejka...',
+  'Jeśli to czytasz to znaczy ze udało ci się otworzyć tą stronkę',
+  'No w sumie fajnie ze ci się udało XD',
+  'Mam do ciebie jedno pytanie',
+  'Ono może wydawać się trochę głupie, ale dla mnie jest mega ważne',
+  'Odpowiedz szczerze bez żadnego ściemniania...',
+  '3...',
+  '2...',
+  '1...'
 ];
 
 const screen = document.getElementById('screen');
@@ -155,23 +153,23 @@ const timerDisplay = document.getElementById('timer');
 
 let textIndex = 0;
 
-function fadeText(text, done) {
+function fadeText(text, callback) {
   screen.style.opacity = 0;
   setTimeout(() => {
     screen.innerHTML = text;
     screen.style.opacity = 1;
     setTimeout(() => {
       screen.style.opacity = 0;
-      if (done) done();
-    }, 2600);
-  }, 2000);
+      setTimeout(callback, 1200); 
+    }, 3300); 
+  }, 400);
 }
 
 function showTextsSequentially() {
   if (textIndex < texts.length) {
     fadeText(texts[textIndex], () => {
       textIndex++;
-      setTimeout(showTextsSequentially, 1200);
+      showTextsSequentially();
     });
   } else {
     revealQuestion();
@@ -180,79 +178,80 @@ function showTextsSequentially() {
 
 function revealQuestion() {
   screen.style.display = 'none';
-  document.body.style.background = '#ffb6c1';
+  // PŁYNNA ZMIANA TŁA (trwa 3 sekundy dzięki CSS transition)
+  document.body.style.backgroundColor = '#ffb6c1';
   
   setTimeout(() => {
     card.style.display = 'block';
-    startBackgroundHearts(); // Start serduszek razem z kartą
-  }, 1500);
+    startBackgroundHearts();
+  }, 1500); // Pokazuje kartę w połowie zmiany koloru
 }
 
-/* ---------- UCIEKAJĄCY PRZYCISK ---------- */
+/* ---------- LOGIKA PRZYCISKÓW ---------- */
 let escapeSpeed = 1;
 let tries = 0;
 let converted = false;
 
+// Obsługa uciekania (myszka i dotyk)
 noBtn.addEventListener("mouseenter", moveNo);
-noBtn.addEventListener("touchstart", (e) => { e.preventDefault(); moveNo(); });
+noBtn.addEventListener("pointerdown", (e) => {
+  if(!converted) {
+    // Na mobile pointerdown wywoła ucieczkę zanim nastąpi click
+    moveNo();
+  }
+});
 
 function moveNo() {
   if(converted) return;
   tries++;
   escapeSpeed += 0.5; 
-  if(tries >= 10) convertToYes();
+  
+  if(tries >= 10) {
+    convertToYes();
+    return;
+  }
 
-  const randomX = (Math.random() * 260 - 130) * (escapeSpeed * 0.6);
-  const randomY = (Math.random() * 160 - 80) * (escapeSpeed * 0.6);
-
-  noBtn.style.transform = `translate(${randomX}px, ${randomY}px) scale(${1 + tries * 0.02})`;
+  const randomX = (Math.random() * 200 - 100) * (escapeSpeed * 0.4);
+  const randomY = (Math.random() * 200 - 100) * (escapeSpeed * 0.4);
+  noBtn.style.transform = `translate(${randomX}px, ${randomY}px)`;
 }
 
 function convertToYes(){
   converted = true;
   noBtn.innerHTML = "Tak 💖";
   noBtn.className = "yes";
-  noBtn.onclick = yesClicked;
   noBtn.style.transform = "none";
+  // Usuwamy uciekanie, dodajemy kliknięcie
+  noBtn.onclick = yesClicked;
 }
 
-/* ---------- KLIKNIĘCIE TAK ---------- */
 function yesClicked() {
   const question = document.getElementById('question');
   const buttons = document.querySelector(".buttons");
-
   buttons.style.display = "none";
-  document.body.style.background = "linear-gradient(135deg, #ffafbd 0%, #ffc3a0 100%)";
   
+  document.getElementById('romantic-bg').style.opacity = '1';
   fireConfetti();
 
-  // ----- ZMIENIONA TREŚĆ PONIŻEJ -----
-  const message = `Strasznie się cieszę, że się zgodziłaś myszko 😘😘<br><br>Mega Cię kocham i czekam juz na to az bedziemy tylko we dwoje ❤️❤️<br><br>Do naszego spotkania zostało:`;
+  const message = `Strasznie się cieszę, że się zgodziłaś myszko 😘😘<br><br>W sumie nie miałaś żadnej innej opcji XD<br><br>Mega Cię kocham i czekam juz na to az bedziemy tylko we dwoje ❤️❤️<br><br>Do naszego spotkania zostało:`;
   
   typeWriterHTML(question, message, 30, () => {
-    timerDisplay.style.display = "block"; // Pokaż licznik
+    timerDisplay.style.display = "block";
     startCountdown();
   });
 }
 
-/* ---------- LICZNIK DO SOBOTY ---------- */
 function startCountdown() {
-  // Data: Sobota, 14 Lutego 2026, godzina 08:30:00
-  // Możesz zmienić datę poniżej na najbliższą sobotę
   const targetDate = new Date("Feb 14, 2026 08:30:00").getTime();
-
   const x = setInterval(function() {
     const now = new Date().getTime();
     const distance = targetDate - now;
-
     const days = Math.floor(distance / (1000 * 60 * 60 * 24));
     const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-    timerDisplay.innerHTML = 
-      days + "d " + hours + "h " + minutes + "m " + seconds + "s ";
-
+    timerDisplay.innerHTML = days + "d " + hours + "h " + minutes + "m " + seconds + "s ";
     if (distance < 0) {
       clearInterval(x);
       timerDisplay.innerHTML = "TO JUŻ! ❤️ Widzimy się!";
@@ -260,10 +259,9 @@ function startCountdown() {
   }, 1000);
 }
 
-/* ---------- EFEKTY ---------- */
 function fireConfetti() {
   const colors = ['#ff4d6d', '#ffb6c1', '#ffd700', '#ffffff'];
-  for(let i=0; i<80; i++) {
+  for(let i=0; i<60; i++) {
     const confetti = document.createElement('div');
     confetti.className = 'confetti-piece';
     confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
@@ -297,7 +295,7 @@ function typeWriterHTML(el, html, speed, callback){
 }
 
 function startBackgroundHearts(){
-  setInterval(spawnHeart, 100);
+  setInterval(spawnHeart, 300);
 }
 
 function spawnHeart(){
@@ -306,10 +304,8 @@ function spawnHeart(){
   h.className = "heart";
   h.innerText = emojis[Math.floor(Math.random()*emojis.length)];
   h.style.left = Math.random() * 100 + "vw";
-  
-  h.style.animationDuration = (3 + Math.random() * 4) + "s";
-  h.style.fontSize = (15 + Math.random() * 25) + "px";
-  
+  h.style.animationDuration = (4 + Math.random() * 3) + "s";
+  h.style.fontSize = (15 + Math.random() * 20) + "px";
   document.body.appendChild(h);
   setTimeout(()=>h.remove(), 7000);
 }
