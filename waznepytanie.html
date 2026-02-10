@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<title>Hej…</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<style>
+body {
+  margin: 0;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: black;
+  font-family: Arial, Helvetica, sans-serif;
+  transition: background 3s ease;
+}
+
+/* ---------- INTRO TEXT ---------- */
+.screen {
+  color: white;
+  font-size: 26px;
+  text-align: center;
+  max-width: 90%;
+  line-height: 1.6;
+  min-height: 120px;
+  opacity: 0;
+  transition: opacity 2.5s ease;
+  position: relative;
+  z-index: 10;
+}
+
+/* ---------- CARD ---------- */
+.card {
+  display: none;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  padding: 45px 35px;
+  border-radius: 32px;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+  text-align: center;
+  max-width: 420px;
+  width: 90%;
+  animation: popIn 1.2s ease-out;
+  position: relative;
+  z-index: 5;
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.6); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+h1 {
+  color: #e63946;
+  margin-bottom: 30px;
+  font-size: 24px;
+}
+
+/* ---------- COUNTDOWN ---------- */
+#timer {
+  margin-top: 25px; /* Odstęp od tekstu */
+  font-weight: bold;
+  color: #d90429;
+  font-size: 22px; /* Nieco większa czcionka */
+  display: none;
+  background: rgba(255,255,255,0.6);
+  padding: 15px;
+  border-radius: 15px;
+  border: 2px solid #ffccd5;
+}
+
+/* ---------- BUTTONS ---------- */
+.buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+}
+
+button {
+  font-size: 18px;
+  padding: 14px 28px;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.2s ease-out;
+}
+
+.yes { background:#ff4d6d; color:white; }
+.no  { 
+  background:#ced4da; 
+  color:#333; 
+  position:relative; 
+  transition: transform 0.1s ease-out;
+}
+
+/* ---------- TŁO - SPADAJĄCE SERCA ---------- */
+.heart {
+  position: fixed;
+  top: -20px;
+  font-size: 22px;
+  pointer-events: none;
+  animation: fall linear forwards;
+  z-index: 1;
+}
+
+@keyframes fall {
+  to { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+}
+
+/* ---------- CONFETTI (NA KONIEC) ---------- */
+.confetti-piece {
+  position: fixed;
+  top: -20px;
+  width: 10px; height: 10px;
+  z-index: 10;
+  pointer-events: none;
+  animation: fallConfetti linear forwards;
+}
+
+@keyframes fallConfetti {
+  to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+</style>
+</head>
+<body>
+
+<div class="screen" id="screen"></div>
+
+<div class="card" id="card">
+  <h1 id="question">Zostaniesz moją walentynką kochanie? 💞</h1>
+  <div class="buttons">
+    <button class="yes" onclick="yesClicked()">Tak 💖</button>
+    <button class="no" id="noBtn">Nie...</button>
+  </div>
+  
+  <div id="timer"></div>
+</div>
+
+<script>
+/* ---------- KONFIGURACJA INTRO ---------- */
+const texts = [
+  'Hej…',
+  'Muszę Cię o coś zapytać.',
+  'To jest trochę dziwne pytanie…',
+  'Ale dla mnie bardzo ważne.',
+  'Obiecaj, że odpowiesz szczerze…'
+];
+
+const screen = document.getElementById('screen');
+const card = document.getElementById('card');
+const noBtn = document.getElementById('noBtn');
+const timerDisplay = document.getElementById('timer');
+
+let textIndex = 0;
+
+function fadeText(text, done) {
+  screen.style.opacity = 0;
+  setTimeout(() => {
+    screen.innerHTML = text;
+    screen.style.opacity = 1;
+    setTimeout(() => {
+      screen.style.opacity = 0;
+      if (done) done();
+    }, 2600);
+  }, 2000);
+}
+
+function showTextsSequentially() {
+  if (textIndex < texts.length) {
+    fadeText(texts[textIndex], () => {
+      textIndex++;
+      setTimeout(showTextsSequentially, 1200);
+    });
+  } else {
+    revealQuestion();
+  }
+}
+
+function revealQuestion() {
+  screen.style.display = 'none';
+  document.body.style.background = '#ffb6c1';
+  
+  setTimeout(() => {
+    card.style.display = 'block';
+    startBackgroundHearts(); // Start serduszek razem z kartą
+  }, 1500);
+}
+
+/* ---------- UCIEKAJĄCY PRZYCISK ---------- */
+let escapeSpeed = 1;
+let tries = 0;
+let converted = false;
+
+noBtn.addEventListener("mouseenter", moveNo);
+noBtn.addEventListener("touchstart", (e) => { e.preventDefault(); moveNo(); });
+
+function moveNo() {
+  if(converted) return;
+  tries++;
+  escapeSpeed += 0.5; 
+  if(tries >= 10) convertToYes();
+
+  const randomX = (Math.random() * 260 - 130) * (escapeSpeed * 0.6);
+  const randomY = (Math.random() * 160 - 80) * (escapeSpeed * 0.6);
+
+  noBtn.style.transform = `translate(${randomX}px, ${randomY}px) scale(${1 + tries * 0.02})`;
+}
+
+function convertToYes(){
+  converted = true;
+  noBtn.innerHTML = "Tak 💖";
+  noBtn.className = "yes";
+  noBtn.onclick = yesClicked;
+  noBtn.style.transform = "none";
+}
+
+/* ---------- KLIKNIĘCIE TAK ---------- */
+function yesClicked() {
+  const question = document.getElementById('question');
+  const buttons = document.querySelector(".buttons");
+
+  buttons.style.display = "none";
+  document.body.style.background = "linear-gradient(135deg, #ffafbd 0%, #ffc3a0 100%)";
+  
+  fireConfetti();
+
+  // ----- ZMIENIONA TREŚĆ PONIŻEJ -----
+  const message = `Strasznie się cieszę, że się zgodziłaś myszko 😘😘<br><br>Mega Cię kocham i czekam juz na to az bedziemy tylko we dwoje ❤️❤️<br><br>Do naszego spotkania zostało:`;
+  
+  typeWriterHTML(question, message, 30, () => {
+    timerDisplay.style.display = "block"; // Pokaż licznik
+    startCountdown();
+  });
+}
+
+/* ---------- LICZNIK DO SOBOTY ---------- */
+function startCountdown() {
+  // Data: Sobota, 14 Lutego 2026, godzina 08:30:00
+  // Możesz zmienić datę poniżej na najbliższą sobotę
+  const targetDate = new Date("Feb 14, 2026 08:30:00").getTime();
+
+  const x = setInterval(function() {
+    const now = new Date().getTime();
+    const distance = targetDate - now;
+
+    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+    timerDisplay.innerHTML = 
+      days + "d " + hours + "h " + minutes + "m " + seconds + "s ";
+
+    if (distance < 0) {
+      clearInterval(x);
+      timerDisplay.innerHTML = "TO JUŻ! ❤️ Widzimy się!";
+    }
+  }, 1000);
+}
+
+/* ---------- EFEKTY ---------- */
+function fireConfetti() {
+  const colors = ['#ff4d6d', '#ffb6c1', '#ffd700', '#ffffff'];
+  for(let i=0; i<80; i++) {
+    const confetti = document.createElement('div');
+    confetti.className = 'confetti-piece';
+    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+    confetti.style.left = Math.random() * 100 + 'vw';
+    const duration = Math.random() * 3 + 2;
+    confetti.style.animationDuration = duration + 's';
+    document.body.appendChild(confetti);
+    setTimeout(() => confetti.remove(), duration * 1000);
+  }
+}
+
+function typeWriterHTML(el, html, speed, callback){
+  el.innerHTML = "";
+  let i = 0;
+  function type(){
+    if(i < html.length){
+      if(html[i] === "<"){
+        const close = html.indexOf(">", i);
+        el.innerHTML += html.slice(i, close+1);
+        i = close+1;
+      } else {
+        el.innerHTML += html[i];
+        i++;
+      }
+      setTimeout(type, speed);
+    } else if(callback) {
+      callback();
+    }
+  }
+  type();
+}
+
+function startBackgroundHearts(){
+  setInterval(spawnHeart, 100);
+}
+
+function spawnHeart(){
+  const emojis = ['💖','💘','💞','💕','❤️'];
+  const h = document.createElement('div');
+  h.className = "heart";
+  h.innerText = emojis[Math.floor(Math.random()*emojis.length)];
+  h.style.left = Math.random() * 100 + "vw";
+  
+  h.style.animationDuration = (3 + Math.random() * 4) + "s";
+  h.style.fontSize = (15 + Math.random() * 25) + "px";
+  
+  document.body.appendChild(h);
+  setTimeout(()=>h.remove(), 7000);
+}
+
+showTextsSequentially();
+</script>
+</body>
+</html>
